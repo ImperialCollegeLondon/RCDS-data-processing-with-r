@@ -452,7 +452,7 @@ filter(countries, four_regions=="asia", Latitude<0)
 
 dat <- filter(countries, four_regions=="africa")
 dat <- arrange(dat, dat[["UN member since"]])
-top_n(dat, 5)
+head(dat, 5)
 
 #####
 
