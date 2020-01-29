@@ -73,10 +73,15 @@ Many useful R functions are developed by individuals and research groups and mad
 
 You can find a full list of R packages at the [CRAN](https://cran.r-project.org/) page.
 
-Platforms such as RStudio and Anaconda now make it easy to install these published packages and their dependencies.
-The tidyverse packages are already installed as part of RStudio, so we just need to load them into the workspace:
+The tidyverse packages are installed with:
+```{r eval=FALSE}
 
-```{r}
+install.packages("tidyverse")
+
+```
+
+and loaded into the workspace with:
+```{r eval=FALSE}
 
 library(tidyverse)
 
@@ -141,7 +146,7 @@ co2
 ```
 
 This is a straightforward numerical tibble which contains a lot of missing values. 
-The table shows annual CO_2 emissions from burning fossil fuels for each country.
+The table shows annual CO2 emissions from burning fossil fuels for each country.
 
 NB `read_csv()` is a different function to `read.csv()` from base R (which outputs a base `data.frame` rather than a `tbl_df`).
 
@@ -454,7 +459,6 @@ Starting with the `co2` tibble, plot the annual emissions of a country of your c
 
 ```{r}
 
-co2 %>%
 
 
 
@@ -501,7 +505,7 @@ co2_1997
 ```
 
 For every row in the original table, `left_join()` tries to match its `country` with a `name` in `countries`. 
-The resulting table imports the additional columns from the `countries` tibble, so now we can associate each `geo` code with the correct CO_2 emissions.
+The resulting table imports the additional columns from the `countries` tibble, so now we can associate each `geo` code with the correct CO2 emissions.
 
 `left_join()` is just one of several `dplyr` functions for working with relational data.
 You can read more about relational data in the [R for Data Science](https://r4ds.had.co.nz/relational-data.html) online textbook.
@@ -810,6 +814,8 @@ dat <- co2_pp %>%
   spread(year,t_pp) %>%                        # reshape the data
   drop_na()                                    # drop rows with missing data
 
+dat
+
 ```
 
 
@@ -858,11 +864,12 @@ Firstly, we need to get hold of the group names as a vector:
 
 # convert column to a factor to extract the levels
 groups <- levels(factor(co2_pp$eight_regions))
+groups
 
 ```
 
 
-## for() loop
+## for()
 
 One solution would be to adapt the earlier code into a `for()` loop:
 
@@ -877,9 +884,9 @@ for(g in groups) {
     spread(year,t_pp) %>%                        
     drop_na()                                    
 
-  res <- t.test(dat[["1997"]], dat[["2014"]], 
+  res <- t.test(dat[["2014"]], dat[["1997"]], 
               paired=TRUE, 
-              alternative = "greater")        
+              alternative = "less")        
 
   print( str_c(g, ":  p =", res$p.value) )       # str_c() concatenates strings
   
