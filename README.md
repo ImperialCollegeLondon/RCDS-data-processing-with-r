@@ -1,6 +1,8 @@
 # Data Processing with R 
 
-Building on the material covered by R Programming, this workshop will introduce the _tidyverse_ packages, which support advanced data processing and visualisation in R.
+Building on the material covered by *R Programming*, this workshop will introduce the _tidyverse_ packages, which support advanced data processing and visualisation in R.
+
+The following topics will be covered:
 
 - R as a data-handling environment
 - The _tidyverse_ packages
