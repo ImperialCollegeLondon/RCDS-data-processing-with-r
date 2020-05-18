@@ -1,0 +1,53 @@
+---
+title: "Data processing assignment: Exam examiner"
+output: html_notebook
+---
+
+
+## The data
+
+The file `exam_results.xlsx` contains data about some (fictional) students taking modules in a (fictional) Physics department.
+
+
+
+## The tasks
+
+0. Load this file into a dataframe. What are the observations and what are the variables?
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+
+
+```
+
+
+1. Tidy the data.
+
+```{r}
+
+
+```
+
+
+2. Using your tidied data, answer the following questions:
+
+a) For MSci students, what is the mean grade for the Relativity exam?
+
+```{r}
+
+
+```
+
+
+b) What proportion of the students are taking Physics as their major subject?
+
+```{r}
+
+
+```
+
+
+
+---

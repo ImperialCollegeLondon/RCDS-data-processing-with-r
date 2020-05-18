@@ -1,0 +1,620 @@
+---
+title: "Data Processing with R - part 2"
+author: "John Pinney"
+date: "January 2020"
+output: 
+  html_notebook:
+    css: rmd.css
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+---
+
+
+Here's the code to rebuild the `countries`, `co2` and `stats97` tibbles, which we'll be continuing to work with in this session:
+
+```{r}
+
+countries <- read_excel("data_geographies_v1.xlsx", sheet = "list-of-countries-etc")
+
+co2 <- read_csv("yearly_co2_emissions_1000_tonnes.csv")
+co2 <- gather(co2, -c(country,geo), key=year, value=kt, na.rm=TRUE)
+co2$year <- parse_integer(co2$year)
+
+stats97 <- read_csv("1997_stats.csv", col_names=FALSE)
+stats97 <- separate(stats97, col=X1, sep="-", into=c("geo","measurement"))
+stats97 <- spread(stats97, key=measurement, value=X2) 
+
+```
+
+
+
+# Pipes
+
+Often, the operations we want to apply to data require several steps. 
+Because R is organised around functions, we can sometimes get tied up with nested parentheses `()`, or confused by a lot of intermediate variables.
+
+One solution for more understandable code is to make use of **pipes** (from the [magrittr](https://magrittr.tidyverse.org/) package) to chain functions together.
+
+The pipe operator is `%>%`.
+
+We can think of `x %>% f` as having the same meaning as `f(x)`.
+
+A simple example:
+
+```{r}
+
+1:10 %>% mean
+
+```
+
+
+We can also pipe the output to a new function:
+
+```{r}
+1:10 %>% 
+  mean %>%
+  log
+```
+
+
+To capture the result of a chain of pipes, use variable assignment with the arrow operator as normal:
+
+```{r}
+x <- 1:10 %>% 
+  mean %>%
+  log
+
+x
+```
+
+
+By default, the piped value is used as the **first argument** of the function to which it is directed. 
+
+Any further **positional arguments** that are given to the function will be associated with the second argument onwards:
+
+```{r}
+
+1:10 %>%
+  sample(5)  # sample(x, s) returns a random sample (without replacement) of size s from the vector x
+
+```
+
+
+However, for functions that take more than one argument, sometimes we need to refer to the piped value directly using `.`:
+
+```{r}
+
+1:10 %>% 
+  mean %>%
+  log %>%
+  rnorm(10, ., 1)  # rnorm(n, mu, sd) returns a vector of n random samples from a normal distribution with mean mu and standard deviation sd
+
+```
+
+
+#### Exercise {-}
+
+To recap from the last session, this is how we made a histogram of per-capita CO2 emissions for 1997, starting with the `co2` and `stats97` tibbles:
+
+```{r}
+
+co2_1997 <- filter(co2, year==1997)
+co2_1997 <- left_join(co2_1997, stats97[,c("geo","pop")], by="geo")
+co2_1997 <- mutate(co2_1997, kt_pp=kt/pop)
+ggplot(co2_1997,aes(x=kt_pp)) + 
+  geom_histogram(bins=30) + 
+  scale_x_log10()
+
+```
+
+Can you rewrite the workflow above to use pipes instead of overwriting variables?
+```{r}
+
+co2 %>%
+  filter(year==1997) %>%
+  left_join(stats97[,c("geo","pop")], by="geo") %>%
+  mutate(kt_pp=kt/pop) %>%
+  ggplot(aes(x=kt_pp)) + 
+  geom_histogram(bins=30) + 
+  scale_x_log10()
+
+
+```
+
+
+#### Exercise {-}
+
+The file `population_total.csv` contains (real or predicted) population data for each country for the years 1800-2100.
+
+Write a workflow to construct a tibble `co2_pp` containing the following columns:
+
+* country
+* geo
+* year
+* kt = total CO2 emissions (in kilotonnes)
+* pop = total population
+* t_pp = per-capita CO2 emissions (in tonnes)
+
+
+```{r}
+
+population <- read_csv("population_total.csv") %>%        # load the population data
+  gather(-c(country,geo),                                 # tidy the data
+         key=year, 
+         value=pop, 
+         na.rm=TRUE) %>%   
+  mutate(year=parse_integer(year))                        # convert strings to numbers
+
+co2_pp <- co2 %>%
+  left_join(population) %>%                               # join on (country, geo, year)
+  drop_na(pop) %>%                                        # drop rows with no population data
+  mutate(t_pp = 1000*kt/pop)                              # calculate per-capita emissions in tonnes
+
+```
+
+
+Plot the annual *per-capita* CO2 emissions of a country of your choice.
+```{r}
+
+co2_pp %>%
+  filter(country=="Spain") %>%
+  ggplot(aes(x=year,y=t_pp)) + 
+  geom_line()
+
+
+```
+
+
+
+# Summarising data across groups
+
+Cases often belong to distinct groups that we want to compare with each other in some way.
+
+
+#### Exercise {-}
+
+Starting with the `co2_pp` tibble, add a column for the `eight_regions` grouping (taken from the `countries` tibble).
+
+
+```{r}
+
+geo_8 <- countries[c("geo","eight_regions")]  # get the columns 
+co2_pp <- left_join(co2_pp, geo_8, by="geo")    # join to co2_pp
+head(co2_pp)
+
+```
+
+
+## Box plots
+
+Let's look at the data for 2014 only. Here's a more complex visualisation of the data, made by adjusting the data mappings in `aes()`:
+
+```{r}
+
+co2_pp %>%
+  filter(year==2014) %>%                                  # filter by year
+  ggplot(aes(x=eight_regions,                             # map eight_regions to x-axis
+             y=t_pp,                                      # map t_pp to y-axis
+             fill=eight_regions)) +                       # map eight_regions to fill colour
+    geom_boxplot(alpha=0.5) +                             # make boxplots
+    scale_fill_brewer(palette="Set1") +                   # choose the colour palette
+    labs(x=NULL,                                          # remove the x-axis label
+         y="CO2 emissions per capita / tonnes",           # change the y-axis label
+         title="2014") +                                  # add a title
+    guides(fill="none") +                                 # remove the legend
+    scale_y_log10() +                                     # use a log scale
+    coord_flip()                                          # transpose the coordinates x <-> y
+  
+```
+
+
+## group_by() and summarise()
+
+Let's extract the corresponding summary statistics for each group:
+
+```{r}
+
+co2_pp %>%
+  filter(year==2014) %>%
+  group_by(eight_regions) %>%
+  summarise(min=min(t_pp), 
+            q25=quantile(t_pp,0.25), 
+            median=median(t_pp), 
+            q75=quantile(t_pp,0.75), 
+            max=max(t_pp)) %>%
+  arrange(desc(median))
+
+```
+
+`dplyr` provides the `group_by()` function to create a "grouped" version of the tibble. Manipulations on the grouped data will be applied to each group separately and then combined. 
+
+Here, the function `summarise()` is used to make new variables for the summary statistics. The resulting tibble has one row for each of the groups.
+
+
+#### Exercise {-}
+
+Plot the total global CO2 emissions for each year. 
+*Hint*: Start with `co2_pp` and use `group_by()` and `summarise()`.
+
+
+```{r}
+
+co2_pp %>%
+  group_by(year) %>%
+  summarise(total=sum(kt)) %>%
+  ggplot(aes(x=year,y=total)) + 
+  geom_line()
+
+```
+
+`group_by()` is a particularly powerful feature, because it allows you to group by more than one variable at a time. For example:
+
+```{r}
+
+co2_pp %>%
+  group_by(eight_regions, year) %>%
+  summarise(total_pop=sum(pop))
+
+```
+
+#### Exercise {-}
+
+Plot the yearly per-capita CO2 emissions for the eight regions.
+
+*Hint*: to map a variable (e.g. `xx`) to line colour, use `aes(color=xx)`.
+
+```{r}
+
+co2_pp %>%
+  group_by(eight_regions, year) %>%
+  summarise(total_kt=sum(kt),total_pop=sum(pop)) %>%
+  mutate(t_pp=1000*total_kt/total_pop) %>%
+  ggplot(aes(x=year, y=t_pp, color=eight_regions)) + 
+    geom_line() + 
+    scale_color_brewer(palette="Set1")
+
+```
+
+
+## Facets
+
+Instead of plotting everything on the same axes, sometimes it is clearer to make a small panel for each plot (known as a *small multiple*). This is done using the `facet_wrap` function:
+
+```{r}
+co2_pp %>%
+  filter(country %in% c("Brazil","Russia","India","China","South Africa")) %>%
+  ggplot(aes(x=year, y=t_pp)) +
+  geom_line() +
+  facet_wrap(vars(country)) + 
+  labs(y="tonnes CO2 per person")
+
+```
+
+#### Exercise {-}
+
+Try applying `facet_wrap()` to the eight regions plot you made in the previous exercise.
+
+```{r}
+
+co2_pp %>%
+  group_by(eight_regions, year) %>%
+  summarise(total_kt=sum(kt),total_pop=sum(pop)) %>%
+  mutate(t_pp=1000*total_kt/total_pop) %>%
+  ggplot(aes(x=year, y=t_pp, color=eight_regions)) + 
+    geom_line() + 
+    scale_color_brewer(palette="Set1") +
+    facet_wrap(vars(eight_regions)) +
+    guides(colour="none") + 
+    labs(y="tonnes CO2 per person")
+
+
+```
+
+
+# Statistical testing
+
+The Kyoto protocol committing states to reduce greenhouse gas emissions was signed in December 1997.
+Between then and 2014, is there any evidence that countries are making effort to reduce CO2 output?
+
+To begin, let's consider the per capita CO2 emissions for the `europe_west` countries in 1997 and 2014:
+
+```{r}
+
+co2_pp %>%
+  filter(eight_regions=="europe_west", year %in% c(1997,2014)) %>%
+  group_by(year) %>%
+  summarise(mean=mean(t_pp), sd=sd(t_pp))
+
+```
+
+So there is a reduction in the mean, but also a substantial variation between countries in both years.
+
+Let's compare the distributions visually with violin plots:
+
+```{r}
+
+co2_pp %>%
+  filter(eight_regions=="europe_west",      # filter by eight_regions
+         year %in% c(1997,2014)) %>%        # filter by year
+  mutate(year=factor(year)) %>%             # convert year to a factor for grouping
+  ggplot(aes(x=year,y=t_pp, fill=year)) +   # map year to fill colour
+  geom_violin() +                           # make violin plots
+  labs(y="tonnes CO2 per person")
+
+```
+
+A reduction looks plausible, but is there a statistically significant change in the mean?
+
+Because the data are positively skewed, let's work with `log10(t_pp)` to get closer to a normal distribution:
+
+```{r}
+
+co2_pp %>%
+  filter(eight_regions=="europe_west",     
+         year %in% c(1997,2014)) %>%                            
+  mutate(year=factor(year)) %>%                                 
+  ggplot(aes(x=year, y=log10(t_pp), fill=year)) +                         # now using log10(t_pp)
+  geom_violin() +
+  labs(y="log10(tonnes CO2 per person)")
+
+```
+
+
+We will use a **paired sample t-test** to test the hypothesis
+
+*H1*: The mean change in `log10(t_pp)` from 1997 to 2014 is negative.
+
+against the null hypothesis
+
+*H0*: The mean change in `log10(t_pp)` from 1997 to 2014 is zero or positive.
+
+This hypothesis test is one-tailed, because we are only looking at evidence for a reduction in emissions.
+
+We use the *paired* version of the t-test because an individual country's value in 2014 clearly depends on
+its value in 1997.
+
+We will use a significance level of 5%.
+
+First we construct a tibble with columns for the data vectors that we need for the test:
+
+```{r}
+
+dat <- co2_pp %>%
+  filter(eight_regions=="europe_west",         # filter by eight_regions
+         year %in% c(1997,2014)) %>%           # filter by year
+  select(country,year,t_pp) %>%                # only using these variables
+  spread(year,t_pp) %>%                        # reshape the data
+  drop_na()                                    # drop rows with missing data
+
+dat
+
+```
+
+
+Note that this is no longer a tidy tibble, but that's OK - we are just using it as an intermediate step towards the test.
+
+Next we use the `t.test()` function to obtain a p-value.
+
+For paired samples, it is important that the vectors are of the same length and in the same order.
+This has already been ensured because:
+
+  1. the data are taken from a tibble containing the country names, so the values for 1997 and 2014 (taken from the tibble columns) are ordered in the same way.
+  2. we have used drop_na() to remove any rows with a missing value.
+
+```{r}
+
+res <- t.test(dat[["2014"]], dat[["1997"]], 
+              paired=TRUE, 
+              alternative = "less")          # i.e. H1: 2014 < 1997
+
+print(res$p.value)
+
+```
+
+So p < 0.05 and hence there is substantial evidence to reject H0 for this group of countries.
+
+
+#### Exercise {-}
+
+Which countries in `europe_west` made the biggest per-capita reductions in CO2 emissions 1997-2014?
+*Hint*: Start with the reshaped tibble (`dat`) made above.
+
+```{r}
+
+##### SOLUTION
+
+dat %>%
+  mutate(change=dat[["2014"]]-dat[["1997"]]) %>%
+  arrange(change)
+
+```
+
+
+
+# Iteration
+
+How can we repeat the t-test for the other groups?
+
+Firstly, we need to get hold of the group names as a vector:
+
+```{r}
+
+# convert column to a factor to extract the levels
+groups <- levels(factor(co2_pp$eight_regions))
+groups
+
+```
+
+
+## for()
+
+One solution would be to adapt the earlier code into a `for()` loop:
+
+```{r}
+
+for(g in groups) {
+  
+  dat <- co2_pp %>%
+    filter(eight_regions==g,                     # filter by eight_regions
+         year %in% c(1997,2014)) %>%           
+    select(country,year,t_pp) %>%                
+    spread(year,t_pp) %>%                        
+    drop_na()                                    
+
+  res <- t.test(dat[["2014"]], dat[["1997"]], 
+              paired=TRUE, 
+              alternative = "less")        
+
+  print( str_c(g, ":  p =", res$p.value) )       # str_c() concatenates strings
+  
+}
+
+
+```
+
+This is fine if we only need to *look at* the p-values, but things will get complicated if we want to collect them as a vector (for example, in order to correct for multiple hypothesis testing).
+
+
+## map()
+
+A more elegant solution would be to use one of the `map()` functions from the `purrr` package.
+
+`map(x, f)` takes a list (or vector) x and a function f, and passes each element of x to f in turn.
+The output of `map()` is a list (the same length as x) containing the individual outputs of f:
+
+```{r}
+f <- function(x) {
+  return(x + 100)
+}
+
+map(1:5, f)
+```
+
+Equivalently, using an **anonymous function**:
+
+```{r}
+
+map(1:5, function(x) return(x + 100))
+
+```
+
+`map()` also supports shortcuts in the form of **equations**, which can allow more compact code:
+
+```{r}
+
+map(1:5, ~ .x + 100)
+
+```
+
+For convenience and code optimisation, there are versions of `map()` that return vectors instead of lists. 
+For example, `map_dbl()` returns a vector of numbers:
+
+```{r}
+
+map_dbl(1:5, ~ .x + 100)
+
+```
+
+We can use `map_dbl()` to produce a vector of p-values:
+
+```{r}
+
+do_t_test <- function(g) {                     # our function to do one test
+  
+  dat <- co2_pp %>%
+    filter(eight_regions==g,                   # filter by eight_regions
+         year %in% c(1997,2014)) %>%           
+    select(country,year,t_pp) %>%                
+    spread(year,t_pp) %>%                        
+    drop_na()                                    
+
+  res <- t.test(dat[["1997"]], dat[["2014"]], 
+              paired=TRUE, 
+              alternative = "greater")        
+
+  return(res$p.value)                          # function returns the p-value
+  
+}
+
+pvals <- map_dbl(groups, do_t_test)    # map group names to the t-test function
+names(pvals) <- groups                 # add the group names to the vector
+
+pvals
+
+```
+
+We can now apply a simple correction for the multiple hypothesis tests:
+
+```{r}
+pvals_corrected <- pvals * length(pvals)
+pvals_corrected
+
+```
+
+
+The `map()` functions are generally faster and more useful than an equivalent `for()` loop, and they are much easier to understand than the equivalent `apply` functions from base R.
+
+
+## walk()
+
+`walk(x, f)` acts in the same way as `map()`, but returns the input list `x`. 
+
+This is a suitable alternative to `map()` when there is no output to be collected from f - 
+for example, if we are using it to print something to screen or write some data to a file.
+
+
+#### Exercise {-}
+
+Use `walk()` to make a version of the violin plot for each of the eight regions, and save each one as a PNG image.
+
+
+```{r}
+
+##### SOLUTION
+
+makefig <- function(g){
+  co2_pp %>%
+    filter(eight_regions==g, year %in% c(1997,2014)) %>%
+    mutate(year=factor(year)) %>%
+    ggplot(aes(x=year,y=log(t_pp), fill=year)) + 
+    geom_violin() +
+    labs(y="log10(tonnes CO2 per person)")
+  ggsave(str_c(g,".png"))
+}
+
+walk(groups, makefig)
+
+
+```
+
+
+# Further Reading {-}
+
+## Textbooks {-}
+
+These online textbooks cover a wide range of topics in R data processing using the tidyverse.
+
+- Grolemung G & Wickham H, [R for Data Science](https://r4ds.had.co.nz/) (2017)
+- Wickham H, [ggplot2: Elegant Graphics for Data Analysis](https://ggplot2-book.org) (2020)
+- Chang W, [R Graphics Cookbook](https://r-graphics.org) (2019)
+- Ismay C & Kim AY, [Statistical Inference via Data Science](https://moderndive.com) (2019)
+- Sanchez G, [Handling Strings with R](https://www.gastonsanchez.com/r4strings/) (2016)
+
+
+## Other web resources {-}
+
+The [RStudio cheat sheets](https://rstudio.com/resources/cheatsheets/) are great for a quick overview 
+of the tidyverse functions. 
+
+The [tidyverse overview](https://tidyverse.tidyverse.org) provides links to further information on each individual package.
+
+The RStudio team also provide some suggested [learning paths](https://education.rstudio.com/learn/) 
+for beginner, intermediate and expert R users.
+
+
+# Acknowledgements {-}
+
+All data used in this workshop are taken from https://www.gapminder.org/data/
+
+---

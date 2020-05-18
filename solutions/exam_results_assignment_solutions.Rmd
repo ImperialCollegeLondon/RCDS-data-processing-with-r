@@ -1,0 +1,116 @@
+---
+title: "Data processing assignment: Exam examiner"
+output: html_notebook
+---
+
+
+## The data
+
+The file `exam_results.xlsx` contains data about some (fictional) students taking modules in a (fictional) Physics department.
+
+
+
+## The tasks
+
+0. Load this file into a dataframe. What are the observations and what are the variables?
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+df <- read_excel('exam_results.xlsx')
+df
+
+```
+
+```{r}
+#
+# At first glance, it looks like we should treat students as observations 
+# and each module as a variable, but that would place the grades from both years
+# into the same cell (violating rule 3). We might make a decision to aggregate the 
+# two years into a single exam result, but that would destroy some potentially 
+# important information.
+#
+# The alternative is to treat each exam result as an observation. This creates a
+# lot of redundancy by repeating student data in multiple rows, but that is no problem 
+# unless the table were so large that memory became an issue. 
+#
+# The resulting 9 variables are:
+# Student Code, Surname, Forename, Degree (BSc/MSci), Major, Minor, Module, Year, Grade.
+#
+#
+# N.B. 
+# The aim of tidying is to hold data in memory in a form from which it is easy to
+# generate any tables that we might need for analysis. This is a less stringent 
+# kind of normalisation than is needed for database design, where redundancy 
+# is avoided at all costs. Making separate tables for Students and Exams would be 
+# non-redundant (and still tidy), but leaving them in the same table is fine.
+#
+
+```
+
+
+1. Tidy the data.
+
+```{r}
+# Start by gathering the grades into a single column.
+# We have to supply the names of the gathered columns as a vector.
+
+df2 <- df %>%
+  gather(c('2019','2020'), key='Year', value='Grade', na.rm=TRUE) %>%
+  mutate(Year=parse_integer(Year))
+
+df2
+
+```
+
+```{r}
+# Next, we need to split the Degree Programme into its component variables.
+
+df3 <- df2 %>%
+  separate('Degree Programme', into=c("Degree","Major","with","Minor")) %>%
+  select(-with)
+
+df3
+```
+
+```{r}
+# The data is now tidy!
+
+```
+
+2. Using your tidied data, answer the following questions:
+
+a) For MSci students, what is the mean grade for the Relativity exam?
+
+```{r}
+# Use filter to find the right rows, then get the Grade data and take a mean.
+
+df3 %>%
+  filter(Degree=='MSci' & Module=='Relativity') %>%
+  pull(Grade) %>%
+  mean()
+
+```
+
+b) What proportion of the students are taking Physics as their major subject?
+
+```{r}
+# We need to make a table with one row per student.
+
+df3 %>%
+  select('Student Code','Major') %>%
+  unique() %>%
+  mutate(Physics=(Major=='Physics')) %>%
+  summarise(mean(Physics))
+
+```
+
+```{r}
+# Notice that it is much easier to answer these questions using the 
+# tidy data than it would have been with the original table!
+```
+
+
+
+---

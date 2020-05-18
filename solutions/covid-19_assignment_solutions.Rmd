@@ -1,0 +1,98 @@
+---
+title: "Data processing assignment: COVID-19"
+output: html_notebook
+---
+
+
+## The data
+
+You are provided with a CSV file, `covid-19.csv` which was downloaded from the EU's open data portal, https://data.europa.eu/euodp/en/home. This file contains data for COVID-19 cases and deaths for each country since the end of 2019.
+
+The dates given in the first column are in the format `dd/mm/yyyy`, e.g. `16/05/2020`. 
+These can be converted to R's `date` datatype using the `dmy()` function from the tidyverse `lubridate` package:
+
+```{r}
+library(tidyverse)
+library(lubridate)
+
+dmy("16/05/2020")
+```
+
+
+## The tasks
+
+0. Use the tidyverse functions to load this file into a dataframe and convert the dates from strings to the `date` datatype. 
+
+```{r}
+df = read_csv('covid-19.csv')
+df <- df %>%
+  mutate(date=dmy(dateRep))
+head(df)
+```
+
+
+
+Now create figures to show the following:
+
+1. Daily cases for a single country.
+
+```{r}
+df %>%
+  filter(countriesAndTerritories=="Spain") %>%
+  ggplot(aes(x=date,y=cases)) +
+  geom_line()
+```
+
+2. Weekly cases for a single country. *Hint*: use `week()` to convert a date to a number representing the week of the year.
+```{r}
+df %>%
+  mutate(week=week(date)) %>%
+  filter(year==2020 & countriesAndTerritories=="Spain") %>%
+  group_by(week) %>%
+  summarise(rate = sum(cases)) %>%
+  ggplot(aes(x=week,y=rate)) +
+  geom_col()
+  
+```
+
+
+2. Cumulative daily cases for a single country. *Hint*: use `arrange()` and `cumsum()`
+
+
+```{r}
+df %>%
+  filter(countriesAndTerritories=="Spain") %>%
+  arrange(date) %>%
+  mutate(totalCases = cumsum(cases)) %>%
+  ggplot(aes(x=date,y=totalCases)) +
+  geom_line() 
+
+```
+
+3. Daily cases for each continent. *Hint*: use `group_by()` and `summarise()`
+
+```{r}
+df %>%
+  arrange(date) %>%
+  group_by(continentExp,date) %>%
+  summarise(totalCases = sum(cases)) %>%
+  ggplot(aes(x=date,y=totalCases, color=continentExp)) +
+  geom_line()
+```
+
+
+5. Apparent overall mortality rate (total deaths / total cases) for each country, grouped by continent.
+
+```{r}
+df %>%
+  group_by(continentExp,countriesAndTerritories) %>%
+  summarise(totalDeaths = sum(deaths), totalCases = sum(cases)) %>%
+  mutate(mortality = totalDeaths/totalCases) %>%
+  ggplot(aes(y=mortality,x=continentExp, fill=continentExp)) +
+  geom_boxplot() + 
+  guides(fill='none')
+
+
+```
+
+---

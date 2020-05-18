@@ -1,0 +1,527 @@
+---
+title: "Data Processing with R - part 1"
+author: "John Pinney"
+date: "January 2020"
+output: 
+  html_notebook:
+    css: rmd.css
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+---
+
+# Introduction
+
+This workshop introduces the [tidyverse](https://www.tidyverse.org/) packages, which support data processing and visualisation in R.
+All of these packages share the same concepts of data handling, which makes it easier to build workflows that move between different kinds of task:
+
+- Reading tabular data (with `readr`)
+- Tidying data (with `tidyr`)
+- Transforming data (with `dplyr`)
+- Data visualisation (with `ggplot2`)
+- Applying statistical tests
+
+This workshop assumes a basic familiarity with the R language, as covered in the introductory *R Programming* workshop.
+
+
+## Getting started in RStudio
+
+![](rconsole.png)
+
+- Bottom left: console window (type commands here and see the output directly)
+- Top left: editor window (for editing R notebooks and scripts)
+- Top right: workspace / history window (examine the current workspace, import datasets, see commands entered previously)
+- Bottom right: files / plots / packages / help window (change working directory, install packages, see graphics output, browse help)
+
+## R notebooks
+
+This document is an example of an *R notebook*, which combines text and code and makes it easy to embed R analysis within a report (ouput as HTML, PDF, Word document or presentation slides). This can help to make research more reproducible by allowing you to share an entire analysis workflow together with a narrative.
+
+When you open the notebook's source code (*.Rmd* file) in RStudio, you can view and edit it in the editor window.
+
+Text is formatted using the [R markdown](https://rmarkdown.rstudio.com/) notation, which is derived from [Markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet). This is a simple way to apply styling to text and indicate the structure of your document.
+
+R code is included as *chunks*, which look like this:
+
+```{r}
+## R code lives here
+print("Hello RStudio!")
+```
+
+When the cursor is inside a chunk, you can execute the code using *Ctrl-Shift-Enter*. The commands and output appear in the console window as if the chunk had been copy-pasted there. The output also appears in the notebook just after the chunk.
+
+A notebook is a living document. You are encouraged to make use of this notebook to try out the example code, alter it, complete the exercises and add your own notes and code chunks. You can insert a new code chunk using the shortcut _Ctrl+Alt+I_.
+
+
+## Working directory
+
+Before you start work, please check your working directory:
+
+```{r eval=FALSE}
+
+getwd()
+
+```
+
+You can change the working directory using the files window in RStudio (bottom right).
+Navigate to the directory containing the workshop data and click the cog icon for the "Set as Working Directory" option.
+
+
+## About packages
+
+Many useful R functions are developed by individuals and research groups and made available to the community as *packages*.
+
+You can find a full list of R packages at the [CRAN](https://cran.r-project.org/) page.
+
+The tidyverse packages are installed with:
+```{r eval=FALSE}
+
+install.packages("tidyverse")
+
+```
+
+and loaded into the workspace with:
+```{r eval=FALSE}
+
+library(tidyverse)
+
+```
+
+Note that this command loads all of the core tidyverse packages, but you can also load them individually as necessary.
+
+
+## The data
+
+Today's session will focus on data taken from the [GapMinder](https://www.gapminder.org/data/) project.
+
+
+# Loading data (**readr**)
+
+## Excel spreadsheets
+
+To begin, we will use the [readxl](https://readxl.tidyverse.org/) package to load data from the relevant sheets in the Excel workbook.
+This package is not part of the core tidyverse, so we need to load it directly:
+
+```{r}
+library(readxl)
+```
+
+The command `read_excel()` reads both xls and xlsx files and detects the format from the extension.
+Today we will only use the sheet called `list-of-countries-etc` from this workbook.
+
+```{r}
+read_excel("data_geographies_v1.xlsx", sheet = "list-of-countries-etc")
+```
+
+RStudio shows you the output as a table.
+Let's capture the loaded data using the variable `countries`:
+
+```{r}
+countries <- read_excel("data_geographies_v1.xlsx", sheet = "list-of-countries-etc")
+```
+
+We can get a quick overview of the data using the `str()` function:
+
+```{r}
+str(countries)
+```
+
+
+## Tibbles
+
+Notice that as well the class `data.frame`, the object `countries` also belongs to the classes `tbl_df` and `tbl`.
+This shows that the data has been loaded in the form of a [tibble](https://tibble.tidyverse.org/).
+
+Tibbles are part of the tidyverse architecture. They are like data frames, but they do **less** (e.g., they don't attempt to coerce variables into different types) and complain **more** (e.g., when a variable does not exist). The idea is to force the programmer to deal with issues earlier, and so make it harder to write confusing or broken R code.
+
+## CSV files
+
+Let's look at another, related data set, this time loaded from a CSV file using `read_csv()` from the [readr](https://readr.tidyverse.org/) package:
+
+```{r}
+
+co2 <- read_csv("yearly_co2_emissions_1000_tonnes.csv")
+co2
+
+```
+
+This is a straightforward numerical tibble which contains a lot of missing values. 
+The table shows annual CO2 emissions from burning fossil fuels for each country.
+
+NB `read_csv()` is a different function to `read.csv()` from base R (which outputs a base `data.frame` rather than a `tbl_df`).
+
+Tabular data in other formats (e.g. with tabs as delimiters, or using fixed-width fields) can also be read using other functions from `readr`.
+
+
+# Tidying data (**tidyr**)
+
+The tidyverse packages put a lot of emphasis on working with **tidy** data. What do we mean by that?
+
+Tidy data has the three following attributes:
+
+1. Every column is a variable
+2. Every row is an observation (also known as a "case")
+3. Every cell holds a single value
+
+When data is tidy, we can visualise and analyse it more easily.
+
+However, most of the data tables that you encounter "in the wild" will not be tidy by this definition, so the [tidyr](https://tidyr.tidyverse.org/) package provides functions to help reshape them into a tidy form.
+
+Look at the `co2` tibble. What are the observations and what are the variables?
+
+## gather()
+
+We can use the `gather()` function to tidy the `co2` tibble:
+
+```{r}
+co2 <- gather(co2, -c(country,geo), key=year, value=kt, na.rm=TRUE)
+co2
+```
+
+`gather()` works to **lengthen** the data table by collecting observations from multiple columns.
+
+We specify the columns to use (all columns *except* the country name and geo code) and provide the names of two new variables, one to hold the old variable names ("year") and one to hold
+the observations collected ("tonnes_per_person"). 
+
+Notice that the tidyverse functions usually allow you to omit quotes when referring to column names.
+
+By setting `na.rm=TRUE`, we discard the cells that did not contain observations.
+
+## Changing data type
+
+One complication here is that the `year` variable is shown as having a character data type. This is because the years have been derived from column names (strings) in the previous version of the table. Let's fix this before going any further:
+
+```{r}
+
+co2$year <- parse_integer(co2$year)
+co2
+
+```
+
+
+## CSV without headers
+
+Now that `co2` is in a tidy form, let's look at another example. `1997_stats.csv` is a CSV file containing GDP and population for various countries for the year 1997.
+
+Actually this file is not in a correct CSV format, because it is missing a header row. You can open it in Excel to verify this. However, we can still load it using `read_csv()` as follows:
+
+```{r}
+stats97 <- read_csv("1997_stats.csv", col_names=FALSE)
+stats97
+```
+
+You can see that the two columns in this file have been given the names `X1` and `X2`.
+
+This file looks a bit harder to tidy. What are the variables in this data set and what are the observations?
+
+## separate()
+
+First, we need to split the `X1` data into two columns: one for the three-letter country code (the variable named `geo` in our `countries` tibble) and one for the type of measurement (GDP or population).
+We can do this with the function `separate()`:
+
+```{r}
+stats97 <- separate(stats97, col=X1, sep="-", into=c("geo","measurement"))
+stats97
+```
+
+Take a look at the command above. The arguments to `separate()` give the tibble to be processed, the name of the column to be split, the string to use as the delimiter, and a vector of strings giving the names for the resulting columns.
+
+## spread()
+
+Now we need to separate the GDP and population values into two different columns. This is done using the `spread()` function:
+
+```{r}
+stats97 <- spread(stats97, key=measurement, value=X2) 
+stats97
+```
+
+Notice that there are fewer rows than before; The `spread()` action **shortens** the length of the table. 
+
+Now each column is a variable, each row is an observation, and each cell is a single vale, so we have successfully tidied `stats97`.
+
+The [readr/tidyr cheat sheet](https://github.com/rstudio/cheatsheets/raw/master/data-import.pdf) gives a useful summary of the tidyverse functions for loading and tidying data.
+
+
+
+# Visualising data (**ggplot2**)
+
+Having loaded some numerical data, a sensible first step is to visualise the distributions of variables to check for any issues.
+
+Although there are many useful plotting functions available in base R, in this session we will focus on making plots using the tidyverse package `ggplot2`. This is a very powerful set of functions that support a consistent approach to data visualisation. `ggplot2` makes it much easier to create high-quality graphics for presentations and publications.
+
+## Histogram
+
+Let's start with a histogram for the GDP data from the `stats97` tibble:
+
+```{r}
+stats97
+```
+
+Some of the GDP values are missing, so let's remove those rows as a first step, using `drop_na()` from `readr`:
+
+```{r}
+
+gdp97 <- drop_na(stats97, gdp)
+gdp97
+
+```
+
+
+
+
+```{r}
+a <- ggplot(gdp97, aes(x=gdp))
+hist <- a + geom_histogram(bins=100)
+hist
+```
+
+Notice that there are two steps to creating the plot. 
+
+The first line constructs the data space by specifying the dataset (`gdp97`) and the variable(s) of interest 
+(in this case, just `gdp`). The `aes()` function controls the *aesthetic mappings* used by `ggplot2`, i.e. the way in which the data will be mapped to visual elements. 
+
+In the second step, we add in a histogram *geom* that paints in the histogram bars and constructs the y-axis. Geoms are the actual visual marks that 
+encode the data. `ggplot2` provides geoms for all the commonly-used plot types, but also graphical primitives such as curves, lines and polygons, from which other visualisations can be built.
+
+The `ggplot2` defaults for axes, labels etc. are usually informative enough for data exploration, but of course everything can be modified if necessary.
+For example, to add at title, change the histogram colour and show population on a log scale:
+
+```{r}
+hist <- a + geom_histogram(bins=20, fill="blue", alpha=0.5) + labs(x="GDP", title="Countries in 1997") + scale_x_log10()
+hist
+```
+
+## Saving plots to file
+
+We can save the last plot made to a file using
+
+```{r}
+ggsave("my_histogram.pdf")
+```
+The file type is determined by the file extension and the size of the image can be changed using `width` and `height` options.
+
+
+## Violin plot
+
+The same data can be plotted using the `geom_violin()` geom. This time we will map `gdp` to the y coordinate:
+
+```{r}
+
+ggplot(gdp97, aes(y=gdp, x="")) + geom_violin(fill="blue", alpha=0.5, linetype=0) + scale_y_log10()
+
+```
+
+
+
+## Scatter plot
+
+We can visualise covariation between variables using a scatter plot, for example GDP vs population. This uses `geom_point()`:
+
+```{r}
+
+ggplot(gdp97, aes(x=pop, y=gdp)) + 
+  geom_point() + 
+  scale_x_log10() + 
+  scale_y_log10() 
+
+```
+
+
+
+The [ggplot2 cheat sheet](https://github.com/rstudio/cheatsheets/raw/master/data-visualization-2.1.pdf) gives much more information about plotting options.
+
+
+
+# Manipulating data (**dplyr**)
+
+The [dplyr]() package deals with many types of data manipulation that are needed as part of any analysis workflow. 
+
+
+## mutate()
+
+It might be more useful to compare countries' GDP on a per-capita basis. We need to make a new variable to show per-capita GDP. 
+To do this, we will use the `mutate()` function, which adds new columns to the tibble:
+
+```{r}
+
+gdp97 <- mutate(gdp97, gdp_pp=gdp/pop)
+gdp97
+
+```
+
+Note that like all dplyr functions (and despite its name), the `mutate()` function does not actually change the original tibble used as input, so we still need to capture the output using `<-`.
+
+
+#### Exercise {-}
+
+Visualise the distribution of the new variable `gdp_pp`.
+
+```{r}
+
+
+
+```
+
+
+## Selecting and filtering data
+
+
+### filter()
+
+With tidy data, it is easy to filter cases according to whatever conditions we specify, e.g.:
+
+
+```{r}
+
+filter(gdp97, gdp_pp > 30000, pop < 1000000)
+
+```
+
+
+### select()
+
+We can extract a subset of variables using select(), e.g.:
+
+```{r}
+
+select(gdp97, c(geo,gdp_pp))
+
+```
+
+
+### pull()
+
+If you just want the values from a single column, use `pull()` to extract them as a vector:
+
+```{r}
+
+pull(gdp97, geo)
+
+```
+
+
+
+### arrange()
+
+Use `arrange()` to sort a tibble by ascending column value:
+
+```{r}
+
+arrange(gdp97, pop)
+
+```
+
+
+...or by descending value using `desc()`:
+
+```{r}
+
+arrange(gdp97, desc(pop))
+
+```
+
+
+The [dplyr cheat sheet](https://github.com/rstudio/cheatsheets/blob/master/data-transformation.pdf) gives useful summaries of these and other functions for data manipulation.
+
+
+#### Exercise {-}
+
+Use manipulations of the `countries` tibble to complete the following tasks:
+
+
+1. Find the Asian countries that are south of the equator.
+
+```{r}
+
+
+```
+
+2. Find the first five African countries to join the UN.
+
+```{r}
+
+
+```
+
+3. Make a vector of OECD country names, sorted from East to West.
+
+```{r}
+
+
+```
+
+
+#### Exercise {-}
+
+Starting with the `co2` tibble, plot the annual emissions of a country of your choice.
+*Hint*: use the `geom_line()` geom.
+
+```{r}
+
+
+
+```
+
+
+
+## Joining tables
+
+To compare emissions between countries in a fair way, it would make sense to convert them to a per-capita basis. 
+Let's start with the figures for 1997 to see how this can be done.
+
+First we will make a new tibble containing only the 1997 emissions:
+
+```{r}
+
+co2_1997 <- filter(co2, year==1997)
+co2_1997
+
+```
+
+However, the population data is not yet in the co2 tibble, so we will need to look it up from another tibble by matching the country name. 
+This type of **relational data**, where information must be collected from multiple tables, requires careful handling to make sure that rows in different tables are correctly associated with each other. The country name acts as a **key** to unlock the correct data from the associated table.
+
+The relevant population data is in the stats97 table: 
+
+```{r}
+stats97
+```
+
+This is indexed by the `geo` code for each country.
+
+Taking the `co2_1997` data, we apply a `left_join()` to relate its `geo` variable to the `geo` variable in `stats97`:
+
+```{r}
+
+co2_1997 <- left_join(co2_1997, stats97[,c("geo","pop")], by="geo")
+co2_1997
+
+```
+
+For every row in the original table, `left_join()` tries to match its `country` with a `name` in `stats97`. Notice that we have specified only the columns that we need from `stats97`.
+
+The resulting table imports the additional column `pop` from the `stats97` tibble, so now we can associate each country and year with the correct CO2 emissions and population.
+
+`left_join()` is just one of several `dplyr` functions for working with relational data.
+You can read more about relational data in the [R for Data Science](https://r4ds.had.co.nz/relational-data.html) online textbook.
+
+
+
+#### Exercise {-}
+
+Calculate the per-capita emissions for 1997 as a new column in `co2_1997` and plot these on a histogram.
+
+```{r}
+
+
+```
+
+Which country emitted the most CO2 per capita in 1997? Which emitted the least?
+
+```{r}
+
+
+
+```
+
+---
