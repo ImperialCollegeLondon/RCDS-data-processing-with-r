@@ -15,6 +15,9 @@ Here's the code to rebuild the `countries`, `co2` and `stats97` tibbles, which w
 
 ```{r}
 
+library(tidyverse)
+library(readxl)
+
 countries <- read_excel("data_geographies_v1.xlsx", sheet = "list-of-countries-etc")
 
 co2 <- read_csv("yearly_co2_emissions_1000_tonnes.csv")

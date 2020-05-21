@@ -1793,6 +1793,7 @@ dmy(&quot;16/05/2020&quot;)</code></pre>
 <!-- rnb-chunk-begin -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<hr />
 <p>Now create figures to show the following:</p>
 <ol style="list-style-type: decimal">
 <li>Daily cases for a single country.</li>
@@ -1808,14 +1809,14 @@ dmy(&quot;16/05/2020&quot;)</code></pre>
 <!-- rnb-chunk-begin -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<ol start="2" style="list-style-type: decimal">
+<ol start="3" style="list-style-type: decimal">
 <li>Cumulative daily cases for a single country. <em>Hint</em>: use <code>arrange()</code> and <code>cumsum()</code></li>
 </ol>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<ol start="3" style="list-style-type: decimal">
+<ol start="4" style="list-style-type: decimal">
 <li>Daily cases for each continent. <em>Hint</em>: use <code>group_by()</code> and <code>summarise()</code></li>
 </ol>
 <!-- rnb-text-end -->
@@ -1830,10 +1831,38 @@ dmy(&quot;16/05/2020&quot;)</code></pre>
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <hr />
+<ol start="6" style="list-style-type: decimal">
+<li>The UK (Referred to as “United_Kingdom” in this data set) has a strong weekly periodicity in reported COVID-19 deaths.</li>
+</ol>
+<ol style="list-style-type: lower-alpha">
+<li>Make a plot to illustrate this effect as clearly as possible. <em>Hint</em>: <code>lubridate</code> provides a function <code>wday()</code> which returns the day of the week as an integer, starting from 1 = Sunday.</li>
+</ol>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<ol start="2" style="list-style-type: lower-alpha">
+<li>Show that the number of deaths reported on Mondays and Tuesdays is significantly lower than on other days.</li>
+</ol>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<ol start="3" style="list-style-type: lower-alpha">
+<li>Do any other countries show a similar periodicity?</li>
+</ol>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<ol start="4" style="list-style-type: lower-alpha">
+<li>How could you explain what is happening, and what are the implications for how we use the data?</li>
+</ol>
+<hr />
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiRGF0YSBwcm9jZXNzaW5nIGFzc2lnbm1lbnQ6IENPVklELTE5IgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgoKIyMgVGhlIGRhdGEKCllvdSBhcmUgcHJvdmlkZWQgd2l0aCBhIENTViBmaWxlLCBgY292aWQtMTkuY3N2YCB3aGljaCB3YXMgZG93bmxvYWRlZCBmcm9tIHRoZSBFVSdzIG9wZW4gZGF0YSBwb3J0YWwsIGh0dHBzOi8vZGF0YS5ldXJvcGEuZXUvZXVvZHAvZW4vaG9tZS4gVGhpcyBmaWxlIGNvbnRhaW5zIGRhdGEgZm9yIENPVklELTE5IGNhc2VzIGFuZCBkZWF0aHMgZm9yIGVhY2ggY291bnRyeSBzaW5jZSB0aGUgZW5kIG9mIDIwMTkuCgpUaGUgZGF0ZXMgZ2l2ZW4gaW4gdGhlIGZpcnN0IGNvbHVtbiBhcmUgaW4gdGhlIGZvcm1hdCBgZGQvbW0veXl5eWAsIGUuZy4gYDE2LzA1LzIwMjBgLiAKVGhlc2UgY2FuIGJlIGNvbnZlcnRlZCB0byBSJ3MgYGRhdGVgIGRhdGF0eXBlIHVzaW5nIHRoZSBgZG15KClgIGZ1bmN0aW9uIGZyb20gdGhlIHRpZHl2ZXJzZSBgbHVicmlkYXRlYCBwYWNrYWdlOgoKYGBge3J9CmxpYnJhcnkodGlkeXZlcnNlKQpsaWJyYXJ5KGx1YnJpZGF0ZSkKCmRteSgiMTYvMDUvMjAyMCIpCmBgYAoKCiMjIFRoZSB0YXNrcwoKMC4gVXNlIHRoZSB0aWR5dmVyc2UgZnVuY3Rpb25zIHRvIGxvYWQgdGhpcyBmaWxlIGludG8gYSBkYXRhZnJhbWUgYW5kIGNvbnZlcnQgdGhlIGRhdGVzIGZyb20gc3RyaW5ncyB0byB0aGUgYGRhdGVgIGRhdGF0eXBlLiAKCmBgYHtyfQoKYGBgCgoKTm93IGNyZWF0ZSBmaWd1cmVzIHRvIHNob3cgdGhlIGZvbGxvd2luZzoKCjEuIERhaWx5IGNhc2VzIGZvciBhIHNpbmdsZSBjb3VudHJ5LgoKYGBge3J9CgpgYGAKCgoyLiBXZWVrbHkgY2FzZXMgZm9yIGEgc2luZ2xlIGNvdW50cnkuICpIaW50KjogdXNlIGB3ZWVrKClgIHRvIGNvbnZlcnQgYSBkYXRlIHRvIGEgbnVtYmVyIHJlcHJlc2VudGluZyB0aGUgd2VlayBvZiB0aGUgeWVhci4KCmBgYHtyfQoKICAKYGBgCgoKMi4gQ3VtdWxhdGl2ZSBkYWlseSBjYXNlcyBmb3IgYSBzaW5nbGUgY291bnRyeS4gKkhpbnQqOiB1c2UgYGFycmFuZ2UoKWAgYW5kIGBjdW1zdW0oKWAKCgpgYGB7cn0KCgpgYGAKCjMuIERhaWx5IGNhc2VzIGZvciBlYWNoIGNvbnRpbmVudC4gKkhpbnQqOiB1c2UgYGdyb3VwX2J5KClgIGFuZCBgc3VtbWFyaXNlKClgCgpgYGB7cn0KCgpgYGAKCgo1LiBBcHBhcmVudCBvdmVyYWxsIG1vcnRhbGl0eSByYXRlICh0b3RhbCBkZWF0aHMgLyB0b3RhbCBjYXNlcykgZm9yIGVhY2ggY291bnRyeSwgZ3JvdXBlZCBieSBjb250aW5lbnQuCgpgYGB7cn0KCgpgYGAKCi0tLQo=</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiRGF0YSBwcm9jZXNzaW5nIGFzc2lnbm1lbnQ6IENPVklELTE5IgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgoKIyMgVGhlIGRhdGEKCllvdSBhcmUgcHJvdmlkZWQgd2l0aCBhIENTViBmaWxlLCBgY292aWQtMTkuY3N2YCB3aGljaCB3YXMgZG93bmxvYWRlZCBmcm9tIHRoZSBFVSdzIG9wZW4gZGF0YSBwb3J0YWwsIGh0dHBzOi8vZGF0YS5ldXJvcGEuZXUvZXVvZHAvZW4vaG9tZS4gVGhpcyBmaWxlIGNvbnRhaW5zIGRhdGEgZm9yIENPVklELTE5IGNhc2VzIGFuZCBkZWF0aHMgZm9yIGVhY2ggY291bnRyeSBzaW5jZSB0aGUgZW5kIG9mIDIwMTkuCgpUaGUgZGF0ZXMgZ2l2ZW4gaW4gdGhlIGZpcnN0IGNvbHVtbiBhcmUgaW4gdGhlIGZvcm1hdCBgZGQvbW0veXl5eWAsIGUuZy4gYDE2LzA1LzIwMjBgLiAKVGhlc2UgY2FuIGJlIGNvbnZlcnRlZCB0byBSJ3MgYGRhdGVgIGRhdGF0eXBlIHVzaW5nIHRoZSBgZG15KClgIGZ1bmN0aW9uIGZyb20gdGhlIHRpZHl2ZXJzZSBgbHVicmlkYXRlYCBwYWNrYWdlOgoKYGBge3J9CmxpYnJhcnkodGlkeXZlcnNlKQpsaWJyYXJ5KGx1YnJpZGF0ZSkKCmRteSgiMTYvMDUvMjAyMCIpCmBgYAoKCiMjIFRoZSB0YXNrcwoKMC4gVXNlIHRoZSB0aWR5dmVyc2UgZnVuY3Rpb25zIHRvIGxvYWQgdGhpcyBmaWxlIGludG8gYSBkYXRhZnJhbWUgYW5kIGNvbnZlcnQgdGhlIGRhdGVzIGZyb20gc3RyaW5ncyB0byB0aGUgYGRhdGVgIGRhdGF0eXBlLiAKCmBgYHtyfQoKYGBgCgotLS0KCk5vdyBjcmVhdGUgZmlndXJlcyB0byBzaG93IHRoZSBmb2xsb3dpbmc6CgoxLiBEYWlseSBjYXNlcyBmb3IgYSBzaW5nbGUgY291bnRyeS4KCmBgYHtyfQoKYGBgCgoKMi4gV2Vla2x5IGNhc2VzIGZvciBhIHNpbmdsZSBjb3VudHJ5LiAqSGludCo6IHVzZSBgd2VlaygpYCB0byBjb252ZXJ0IGEgZGF0ZSB0byBhIG51bWJlciByZXByZXNlbnRpbmcgdGhlIHdlZWsgb2YgdGhlIHllYXIuCgpgYGB7cn0KCiAgCmBgYAoKCjMuIEN1bXVsYXRpdmUgZGFpbHkgY2FzZXMgZm9yIGEgc2luZ2xlIGNvdW50cnkuICpIaW50KjogdXNlIGBhcnJhbmdlKClgIGFuZCBgY3Vtc3VtKClgCgoKYGBge3J9CgoKYGBgCgo0LiBEYWlseSBjYXNlcyBmb3IgZWFjaCBjb250aW5lbnQuICpIaW50KjogdXNlIGBncm91cF9ieSgpYCBhbmQgYHN1bW1hcmlzZSgpYAoKYGBge3J9CgoKYGBgCgoKNS4gQXBwYXJlbnQgb3ZlcmFsbCBtb3J0YWxpdHkgcmF0ZSAodG90YWwgZGVhdGhzIC8gdG90YWwgY2FzZXMpIGZvciBlYWNoIGNvdW50cnksIGdyb3VwZWQgYnkgY29udGluZW50LgoKYGBge3J9CgoKYGBgCgotLS0KCjYuIFRoZSBVSyAoUmVmZXJyZWQgdG8gYXMgIlVuaXRlZF9LaW5nZG9tIiBpbiB0aGlzIGRhdGEgc2V0KSBoYXMgYSBzdHJvbmcgd2Vla2x5IHBlcmlvZGljaXR5IGluIHJlcG9ydGVkIENPVklELTE5IGRlYXRocy4KCihhKSBNYWtlIGEgcGxvdCB0byBpbGx1c3RyYXRlIHRoaXMgZWZmZWN0IGFzIGNsZWFybHkgYXMgcG9zc2libGUuICpIaW50KjogYGx1YnJpZGF0ZWAgcHJvdmlkZXMgYSBmdW5jdGlvbiBgd2RheSgpYCB3aGljaCByZXR1cm5zIHRoZSBkYXkgb2YgdGhlIHdlZWsgYXMgYW4gaW50ZWdlciwgc3RhcnRpbmcgZnJvbSAxID0gU3VuZGF5LgoKYGBge3J9CgpgYGAKCihiKSBTaG93IHRoYXQgdGhlIG51bWJlciBvZiBkZWF0aHMgcmVwb3J0ZWQgb24gTW9uZGF5cyBhbmQgVHVlc2RheXMgaXMgc2lnbmlmaWNhbnRseSBsb3dlciB0aGFuIG9uIG90aGVyIGRheXMuCgpgYGB7cn0KCmBgYAoKKGMpIERvIGFueSBvdGhlciBjb3VudHJpZXMgc2hvdyBhIHNpbWlsYXIgcGVyaW9kaWNpdHk/CgpgYGB7cn0KCmBgYAoKKGQpIEhvdyBjb3VsZCB5b3UgZXhwbGFpbiB3aGF0IGlzIGhhcHBlbmluZywgYW5kIHdoYXQgYXJlIHRoZSBpbXBsaWNhdGlvbnMgZm9yIGhvdyB3ZSB1c2UgdGhlIGRhdGE/CgoKCi0tLQo=</div>
 
 
 

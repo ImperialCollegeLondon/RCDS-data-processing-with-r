@@ -24,13 +24,13 @@ dmy("16/05/2020")
 0. Use the tidyverse functions to load this file into a dataframe and convert the dates from strings to the `date` datatype. 
 
 ```{r}
-df = read_csv('covid-19.csv')
+df <- read_csv('covid-19.csv')
 df <- df %>%
   mutate(date=dmy(dateRep))
 head(df)
 ```
 
-
+---
 
 Now create figures to show the following:
 
@@ -43,8 +43,9 @@ df %>%
   geom_line()
 ```
 
-2. Weekly cases for a single country. *Hint*: use `week()` to convert a date to a number representing the week of the year.
+2. Weekly cases for a single country. *Hint*: use `week()` to convert a date to a number representing the week of the year. `geom_col()` makes a bar chart from (x,y) data.
 ```{r}
+
 df %>%
   mutate(week=week(date)) %>%
   filter(year==2020 & countriesAndTerritories=="Spain") %>%
@@ -56,7 +57,7 @@ df %>%
 ```
 
 
-2. Cumulative daily cases for a single country. *Hint*: use `arrange()` and `cumsum()`
+3. Cumulative daily cases for a single country. *Hint*: use `arrange()` and `cumsum()`
 
 
 ```{r}
@@ -69,7 +70,7 @@ df %>%
 
 ```
 
-3. Daily cases for each continent. *Hint*: use `group_by()` and `summarise()`
+4. Daily cases for each continent. *Hint*: use `group_by()` and `summarise()`
 
 ```{r}
 df %>%
@@ -84,6 +85,7 @@ df %>%
 5. Apparent overall mortality rate (total deaths / total cases) for each country, grouped by continent.
 
 ```{r}
+
 df %>%
   group_by(continentExp,countriesAndTerritories) %>%
   summarise(totalDeaths = sum(deaths), totalCases = sum(cases)) %>%
@@ -92,7 +94,199 @@ df %>%
   geom_boxplot() + 
   guides(fill='none')
 
+```
+
+---
+
+
+6. The UK (Referred to as "United_Kingdom" in this data set) has a strong weekly periodicity in reported COVID-19 deaths.
+
+(a) Make a plot to illustrate this effect as clearly as possible. *Hint*: `lubridate` provides a function `wday()` which returns the day of the week as an integer, starting from 1 = Sunday.
+
+```{r}
+
+daymap <- c('other','Monday','Tuesday','other','other','other','other')
+
+df %>%
+  filter(countriesAndTerritories=="United_Kingdom") %>%
+  filter(date > "2020-03-01") %>%
+  mutate(day = wday(date)) %>%
+  mutate(day = daymap[day] ) %>%
+  ggplot(aes(x=date,y=deaths, fill=day )) +
+  geom_col() +                  
+  scale_fill_manual(
+    values = c('Monday'='red','Tuesday'='blue','other'='grey'),
+    breaks = c('Monday','Tuesday','other')  # to order the legend
+  )
 
 ```
+
+(b) Show that the number of deaths reported on Mondays and Tuesdays is significantly lower than on other days.
+
+```{r}
+
+# We can start by producing a table containing mean daily death rates for each week, grouped into (Monday+Tuesday) vs (other days).
+
+daymap <- c('other','MonTue','MonTue','other','other','other','other')
+
+df2 <- df %>%
+  filter(countriesAndTerritories=="United_Kingdom") %>%
+  mutate(week=week(date)) %>%
+  mutate(day = wday(date)) %>%
+  mutate(dayclass = daymap[day] ) %>%
+  group_by(week, dayclass) %>%
+  summarise(mean_deaths = mean(deaths)) 
+
+df2
+
+```
+
+```{r}
+
+# Let's rearrange this to have the two groups in separate columns. 
+# We can also eliminate weeks where either rate is zero.
+
+df3 <- df2 %>%
+  spread(key = dayclass, value = mean_deaths) %>%
+  filter( MonTue > 0 & other > 0)
+
+df3
+
+```
+
+
+
+
+```{r}
+
+# Owing to the overall shape of the curve, there is a dependency between 
+# the mean number of deaths on a (Monday+Tuesday) and the mean number of 
+# deaths during the week following. We should therefore use a 
+# paired-sample t-test to compare the values in the two columns.
+
+# With significance level alpha=0.05:
+
+t.test(df3$MonTue, df3$other, paired=TRUE, alternative='less' )
+
+```
+
+```{r}
+
+# The resulting p < alpha, so we can reject the null hypothesis that the group 
+# (Monday+Tuesday) have the same mean as the other days.
+
+```
+
+
+(c) Do any other countries show a similar periodicity?
+
+
+```{r}
+
+# We can use `map_dbl()` to apply the same hypothesis test to all countries:
+
+daymap <- c('other','MonTue','MonTue','other','other','other','other')
+
+do_test <- function(c) {
+  
+  dfx <- df %>%
+    filter(countriesAndTerritories==c) %>%
+    mutate(week=week(date)) %>%
+    mutate(day = wday(date)) %>%
+    mutate(dayclass = daymap[day] ) %>%
+    group_by(week, dayclass) %>%
+    summarise(mean_deaths = mean(deaths)) %>%
+    spread(key = dayclass, value = mean_deaths) %>%
+    filter( MonTue > 0 & other > 0)
+  
+  # Before attempting the t-test, check that
+  if( 'MonTue' %in% names(dfx) &       # both groups are present
+      'other' %in% names(dfx) &
+      nrow(dfx) > 1 &                  # there is more than one week
+      ( var(dfx$MonTue) > 0 |          # there is some variation
+      var(dfx$other) > 0 )
+  ) {
+    return( t.test(dfx$MonTue, dfx$other, 
+                   paired=TRUE,
+                   alternative='less'
+                   )$p.value )
+  }
+  else return( NA )
+  
+}
+
+all_countries <- df %>%
+  filter(deaths > 0) %>%
+  pull(countriesAndTerritories) %>%
+  sort %>%
+  unique
+
+pval <- map_dbl(all_countries, do_test)  # do the tests
+names(pval) <- all_countries  # add the country names
+pval <- pval[!is.na(pval)]    # remove the countries that couldn't be tested.
+pval <- sort(pval)            # sort by ascending p-value
+
+pval[pval< 0.01]             # show the countries with lowest p-value
+
+```
+
+
+```{r}
+
+# Although we haven't corrected for multiple hypothesis testing, 
+# these p-values do appear low enough to be interesting. 
+
+# Let's visualise these distributions:
+
+country_list <- names(pval[pval< 0.01])
+
+daymap <- c('other','Monday','Tuesday','other','other','other','other')
+
+df %>%
+  filter(countriesAndTerritories %in% country_list) %>%
+  filter(date > "2020-03-01") %>%
+  mutate(day = wday(date)) %>%
+  mutate(day = daymap[day] ) %>%
+  ggplot(aes(x=date,y=deaths, fill=day )) +
+  geom_col() +  
+  scale_y_log10() +
+  facet_wrap(vars(countriesAndTerritories)) +
+  scale_fill_manual(
+    values = c('Monday'='red','Tuesday'='blue','other'='grey'),
+    breaks = c('Monday','Tuesday','other')  # to order the legend
+  )
+
+
+
+
+```
+
+```{r}
+
+# We haven't proven anything statistically, but it does seem that other 
+# countries experience a similar phenomenon.
+
+```
+
+(d) How could you explain what is happening, and what are the implications for how we use the data?
+
+```{r}
+
+# One possible explanation is that there is an administrative backlog 
+# after the weekend (for example, relatives need to be notified before a
+# death can be officially reported). This could lead to a reduction in reported 
+# deaths early in the week.
+#
+# The main implication in making use of the data is that it makes no sense to
+# compare figures day-by-day, only week-by-week.
+#
+# You can find more discussion of this sort of periodic effect at
+# https://twitter.com/jburnmurdoch/status/1247681939575910402 
+# and
+# https://jmuccigr.github.io/blog/2020/04/10/Weekly-Periodicity/
+
+```
+
+
 
 ---

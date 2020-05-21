@@ -27,6 +27,7 @@ dmy("16/05/2020")
 
 ```
 
+---
 
 Now create figures to show the following:
 
@@ -45,7 +46,7 @@ Now create figures to show the following:
 ```
 
 
-2. Cumulative daily cases for a single country. *Hint*: use `arrange()` and `cumsum()`
+3. Cumulative daily cases for a single country. *Hint*: use `arrange()` and `cumsum()`
 
 
 ```{r}
@@ -53,7 +54,7 @@ Now create figures to show the following:
 
 ```
 
-3. Daily cases for each continent. *Hint*: use `group_by()` and `summarise()`
+4. Daily cases for each continent. *Hint*: use `group_by()` and `summarise()`
 
 ```{r}
 
@@ -67,5 +68,31 @@ Now create figures to show the following:
 
 
 ```
+
+---
+
+6. The UK (Referred to as "United_Kingdom" in this data set) has a strong weekly periodicity in reported COVID-19 deaths.
+
+(a) Make a plot to illustrate this effect as clearly as possible. *Hint*: `lubridate` provides a function `wday()` which returns the day of the week as an integer, starting from 1 = Sunday.
+
+```{r}
+
+```
+
+(b) Show that the number of deaths reported on Mondays and Tuesdays is significantly lower than on other days.
+
+```{r}
+
+```
+
+(c) Do any other countries show a similar periodicity?
+
+```{r}
+
+```
+
+(d) How could you explain what is happening, and what are the implications for how we use the data?
+
+
 
 ---
