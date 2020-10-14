@@ -13,7 +13,17 @@ The following topics will be covered:
 - Applying statistical tests to tabular data
 
 
-## Instructions
+## Installing R and RStudio
+
+Please ensure that you have up-to-date versions of both R and RStudio installed and working before the course:                                              
+* https://www.r-project.org/
+* https://rstudio.com 
+
+R and RStudio can also be installed via the Anaconda data science platform: 
+* https://www.anaconda.com.
+
+
+## Getting Started
 
 Download this repository to your computer as a ZIP file and unpack it.
 
