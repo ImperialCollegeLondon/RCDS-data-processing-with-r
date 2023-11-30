@@ -30,7 +30,7 @@ Download this repository to your computer as a ZIP file and unpack it.
 Open `data_processing_with_R.nb.html` in your web browser to get started.
 
 
-Alternatively, you can run the notebook online using Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/johnpinney/data_processing_with_r/master?urlpath=rstudio)
+Alternatively, you can run the notebook online using Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ImperialCollegeLondon/RCDS-data-processing-with-r/master?urlpath=rstudio)
 
 
 ## Evaluation
